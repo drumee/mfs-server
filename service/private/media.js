@@ -1,8 +1,3 @@
-// ================================  *
-//   Copyright Xialia.com  2013-2017 *
-//   FILE  : src/service/private/drumate
-//   TYPE  : module
-// ================================  *
 const { Attr, Constants, Permission, Privilege,
   RedisStore, Cache, toArray, sysEnv
 } = require("@drumee/server-essentials")
@@ -381,32 +376,26 @@ class __private_media extends Media {
    *
    * @returns
    */
-  slurp() {
-    const download = require("download-file");
+  async slurp() {
     const source = this.input.need(Attr.location);
     const url = new URL(source);
-    if (!url.hostname || !url.pathname) {
+    if (!url.hostname || !url.pathname ) {
       this.exception.user("MAL_FORMED_URL");
       return;
     }
-    const dir = basename(process.env.DRUMEE_TMP_DIR, this.randomString());
-
+    let {tmp_dir} =  sysEnv();
     let filename = basename(url.pathname);
-    const options = {
-      directory: dir,
-      filename,
+    let outfile = resolve(tmp_dir, this.randomString(), filename);
+    let opt = {
+      method: 'GET',
+      outfile,
+      url:url.href,
     };
-
-    let location = resolve(dir, filename);
-
-    download(source, options, async (err) => {
-      if (err) {
-        this.exception.server(err);
-        return;
-      }
-      let node = this.source_granted();
-      await this.store(node.id, location, filename);
-    });
+    await Network.request(opt).then(async ()=>{
+      await this.store(node.id, outfile, filename);
+    }).catch(()=>{
+      this.exception.user("FAILED_TO_IMPORT");
+    })
   }
 
   /**
