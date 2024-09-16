@@ -1,6 +1,6 @@
 {
   "name": "@drumee/mfs-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Drumee Meta Filesystem Server",
   "main": "index.js",
   "scripts": {
